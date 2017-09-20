@@ -1,0 +1,14 @@
+# After modifications please run 'systemctl daemon-reload'
+
+[Unit]
+Description=ITPlus Storage Service
+After=network-online.target
+
+[Service]
+PIDFile=/var/run/itplus-storage/pid
+Type=simple
+WorkingDirectory=/opt/itplus/storage
+ExecStart=/opt/itplus/storage/itplus-storage  
+
+[Install]
+WantedBy=multi-user.target
