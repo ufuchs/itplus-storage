@@ -71,14 +71,16 @@ func (d *HubDAO) RetrieveAll(hubID int) (GatewayList, error) {
 //
 func (d *HubDAO) Insert(hubID int, gw *Gateway) error {
 
-	var insStmt = "INSERT INTO gateway (HubID, Hostname) VALUES (?, ?)"
+	var insStmt = "INSERT INTO gateway (HubID, GatewayType, Hostname, Alias) VALUES (?, ?, ?, ?)"
 
 	stmt, err := d.db.Prepare(insStmt)
 	if err != nil {
 		return err
 	}
 
-	res, err := stmt.Exec(hubID, gw.Hostname)
+	defer stmt.Close()
+
+	res, err := stmt.Exec(hubID, gw.GatewayType, gw.Hostname, gw.Alias)
 	if err != nil {
 		return err
 	}

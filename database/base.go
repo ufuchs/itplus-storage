@@ -12,10 +12,11 @@ var DSN = "itplus:abc12345@tcp(192.168.178.12:3306)/itp_home"
 //
 //
 type Gateway struct {
-	GatewayID int
-	HubID     int
-	Hostname  string
-	Alias     string
+	GatewayID   int
+	HubID       int
+	GatewayType string
+	Hostname    string
+	Alias       string
 }
 
 //
@@ -37,14 +38,9 @@ type MeasurementEx struct {
 //
 func NewGateway(rs *sql.Rows) (*Gateway, error) {
 
-	var (
-		err error
-		gw  = &Gateway{}
-	)
+	var gw = &Gateway{}
 
-	err = rs.Scan(&gw.GatewayID, &gw.HubID, &gw.Hostname, &gw.Alias)
-
-	return gw, err
+	return gw, rs.Scan(&gw.GatewayID, &gw.HubID, &gw.Hostname, &gw.Alias)
 
 }
 

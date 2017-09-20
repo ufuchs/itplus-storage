@@ -32,27 +32,63 @@ func mergeDSN(user, pwd, dbhost, dbname string) string {
 }
 
 //
+//
+//
+func openDatabase(dsn string) (db *sql.DB, err error) {
+
+	if db, err = sql.Open("mysql", dsn); err != nil {
+		return
+	}
+
+	if err = db.Ping(); err != nil {
+		return
+	}
+
+	return
+}
+
+//
+//
+//
+func populateSeenGateways(hubID int, db *sql.DB) (seenGateways map[string]bool, err error) {
+
+	seenGateways = map[string]bool{}
+
+	h := NewHubDAO(db)
+
+	gwList, err := h.RetrieveAll(hubID)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, gw := range gwList {
+		seenGateways[gw.Hostname] = true
+	}
+
+	return seenGateways, nil
+}
+
+//
 // NewService
 //
 func NewService(ctx context.Context, dsn, hostname string) (*Service, error) {
 
 	var (
-		err error
+		err   error
+		hubID = 1
 	)
 
 	s := &Service{
 		hostname: hostname,
 	}
 
-	if s.db, err = sql.Open("mysql", dsn); err != nil {
+	if s.db, err = openDatabase(dsn); err != nil {
 		return nil, err
 	}
 
-	if err = s.db.Ping(); err != nil {
-		return nil, err
-	}
+	s.seenGateways, err = populateSeenGateways(hubID, s.db)
 
-	return s, nil
+	return s, err
 
 }
 
@@ -92,8 +128,9 @@ func WriteDB(in []byte, s *Service) error {
 func (s *Service) Run(ctx context.Context) error {
 
 	var (
-		err error
-		wg  *sync.WaitGroup
+		hubID = 1
+		err   error
+		wg    *sync.WaitGroup
 	)
 
 	if wg, err = fcc.GetWGFromContext(ctx); err != nil {
@@ -112,23 +149,45 @@ func (s *Service) Run(ctx context.Context) error {
 			return ctx.Err()
 		case in := <-s.In:
 
+			var err error
+
 			m := &fcc.MeasurementDTO{}
-
-			json.Unmarshal(in, m)
-
-			//fmt.Println(m)
+			if err = json.Unmarshal(in, m); err != nil {
+				fmt.Println(err)
+				continue
+			}
 
 			if s.seenGateways[m.Host] {
+				fmt.Printf("==> Writing to DB - %v\n", m.Alias)
 				continue
 			}
 
 			if !s.exists(m.Host) {
-				fmt.Println("==> Doesn't exist", m.Host)
+				s.addGateway(hubID, m)
 			}
 
-			//			s.seenGateways[m.Alias] = true
-
 		}
+	}
+
+}
+
+func (s *Service) addGateway(hubID int, m *fcc.MeasurementDTO) {
+
+	var err error
+
+	fmt.Printf("==> '%v' doesn't exist - ", m.Host)
+	var h = NewHubDAO(s.db)
+	var gw = &Gateway{
+		HubID:       hubID,
+		GatewayType: "",
+		Hostname:    m.Host,
+		Alias:       "",
+	}
+	if err = h.Insert(hubID, gw); err != nil {
+		fmt.Printf("adding failed - '%v'\n", err)
+	} else {
+		fmt.Println("added")
+		s.seenGateways[m.Host] = true
 	}
 
 }
@@ -140,10 +199,10 @@ func (s *Service) exists(alias string) bool {
 
 	h := NewHubDAO(s.db)
 
-	b, err := h.RowExists(alias)
-	if err != nil {
-		fmt.Println("-->", err)
-	}
+	b, _ := h.RowExists(alias)
+	// if err != nil {
+	// 	fmt.Println("-->", err)
+	// }
 
 	return b
 }
