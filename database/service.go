@@ -54,7 +54,7 @@ func populateSeenGateways(hubID int, db *sql.DB) (seenGateways map[string]bool, 
 
 	seenGateways = map[string]bool{}
 
-	h := NewHubDAO(db)
+	h := NewGatewayDAO(db)
 
 	gwList, err := h.RetrieveAll(hubID)
 	if err != nil {
@@ -177,7 +177,7 @@ func (s *Service) addGateway(hubID int, m *fcc.MeasurementDTO) {
 	var err error
 
 	fmt.Printf("==> '%v' doesn't exist - ", m.Host)
-	var h = NewHubDAO(s.db)
+	var h = NewGatewayDAO(s.db)
 	var gw = &Gateway{
 		HubID:       hubID,
 		GatewayType: "",
@@ -198,6 +198,6 @@ func (s *Service) addGateway(hubID int, m *fcc.MeasurementDTO) {
 //
 func (s *Service) exists(alias string) (int, error) {
 
-	h := NewHubDAO(s.db)
+	h := NewGatewayDAO(s.db)
 	return h.GatewayExists(alias)
 }

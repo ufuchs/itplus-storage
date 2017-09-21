@@ -2,7 +2,6 @@ package database
 
 import (
 	"database/sql"
-	"fmt"
 )
 
 //
@@ -11,12 +10,13 @@ import (
 type MeasurementExDAO struct {
 	insStmt string
 	db      *sql.DB
+	schema  string
 }
 
 //
 //
 //
-func NewMeasurementExDAO(db *sql.DB) *MeasurementExDAO {
+func NewMeasurementExDAO(db *sql.DB, schema string) *MeasurementExDAO {
 
 	var insStmt = `INSERT INTO measurements (
 		GatewayID,
@@ -44,10 +44,10 @@ func NewMeasurementExDAO(db *sql.DB) *MeasurementExDAO {
 		?
 	)
 	`
-
 	return &MeasurementExDAO{
 		insStmt: insStmt,
 		db:      db,
+		schema:  schema,
 	}
 }
 
@@ -101,22 +101,32 @@ func (d *MeasurementExDAO) CreateTable(tableNmame string) error {
 }
 
 //
-// select 1 from `tablename`; //avoids a function call
-// select * from IMFORMATION_SCHEMA.tables where schema = 'db' and table = 'table' // slow. Field names not accurate
-// SHOW TABLES FROM `db` LIKE 'tablename'; //zero rows = not exist
 //
 //
-//
-func (d *MeasurementExDAO) TableExists(tableNmame string) (bool, error) {
+func (d *MeasurementExDAO) TableExists(tableNmame string) error {
 
-	var res string
-	err := d.db.QueryRow("select 1 from `?`;", tableNmame).Scan(&res)
+	var s = "SELECT table_name FROM information_schema.tables WHERE table_schema = ? AND table_name LIKE ?"
+
+	rows, err := d.db.Query(s, d.schema, tableNmame+"%")
 	if err != nil {
-		return false, err
+		return err
 	}
-	fmt.Println(res)
 
-	return false, nil
+	defer rows.Close()
+
+	for rows.Next() {
+
+		gw, err := NewGateway(rows)
+
+		if err != nil {
+			return nil, err
+		}
+
+		list = append(list, gw)
+
+	}
+
+	return nil
 }
 
 //

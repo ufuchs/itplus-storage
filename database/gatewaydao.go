@@ -5,7 +5,7 @@ import (
 )
 
 type (
-	HubDAO struct {
+	GatewayDAO struct {
 		db *sql.DB
 	}
 )
@@ -13,8 +13,8 @@ type (
 //
 //
 //
-func NewHubDAO(db *sql.DB) *HubDAO {
-	return &HubDAO{
+func NewGatewayDAO(db *sql.DB) *GatewayDAO {
+	return &GatewayDAO{
 		db: db,
 	}
 }
@@ -22,7 +22,7 @@ func NewHubDAO(db *sql.DB) *HubDAO {
 //
 //
 //
-func (d *HubDAO) GatewayExists(alias string) (int, error) {
+func (d *GatewayDAO) GatewayExists(alias string) (int, error) {
 	var gwID int
 
 	err := d.db.QueryRow("SELECT GatewayID FROM gateway WHERE alias = ?", alias).Scan(&gwID)
@@ -33,7 +33,7 @@ func (d *HubDAO) GatewayExists(alias string) (int, error) {
 //
 //
 //
-func (d *HubDAO) RetrieveAll(hubID int) (GatewayList, error) {
+func (d *GatewayDAO) RetrieveAll(hubID int) (GatewayList, error) {
 
 	list := GatewayList{}
 
@@ -63,7 +63,7 @@ func (d *HubDAO) RetrieveAll(hubID int) (GatewayList, error) {
 //
 //
 //
-func (d *HubDAO) Insert(hubID int, gw *Gateway) (int64, error) {
+func (d *GatewayDAO) Insert(hubID int, gw *Gateway) (int64, error) {
 
 	var insStmt = "INSERT INTO gateway (HubID, GatewayType, Hostname, Alias) VALUES (?, ?, ?, ?)"
 
@@ -85,13 +85,13 @@ func (d *HubDAO) Insert(hubID int, gw *Gateway) (int64, error) {
 //
 //
 //
-func (d *HubDAO) Update() error {
+func (d *GatewayDAO) Update() error {
 	return nil
 }
 
 //
 //
 //
-func (d *HubDAO) Delete() error {
+func (d *GatewayDAO) Delete() error {
 	return nil
 }

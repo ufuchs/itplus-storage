@@ -27,7 +27,7 @@ func NewGatewayService(db *sql.DB, hubID int) *GatewayService {
 //
 func (s *GatewayService) AddGateway(hubID int, hostname string) (int64, error) {
 
-	var dao = NewHubDAO(s.db)
+	var dao = NewGatewayDAO(s.db)
 
 	return dao.Insert(hubID, &Gateway{
 		HubID:       hubID,
@@ -42,6 +42,6 @@ func (s *GatewayService) AddGateway(hubID int, hostname string) (int64, error) {
 //
 //
 func (s *GatewayService) GatewayExists(host string) (int, error) {
-	dao := NewHubDAO(s.db)
+	dao := NewGatewayDAO(s.db)
 	return dao.GatewayExists(host)
 }

@@ -14,7 +14,7 @@ import (
 
 */
 
-func TestGateway(t *testing.T) {
+func Testgateway(t *testing.T) {
 
 	db, err := sql.Open("mysql", "itplus:abc12345@tcp(192.168.178.12:3306)/itp-home")
 
@@ -28,7 +28,7 @@ func TestGateway(t *testing.T) {
 		t.Error(err.Error())
 	}
 
-	g := NewHubDAO(db)
+	g := NewGatewayDAO(db)
 
 	list, err := g.RetrieveAll(1)
 	if err != nil {
