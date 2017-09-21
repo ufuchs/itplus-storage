@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"hidrive.com/ufuchs/itplus/base/fcc"
+	"github.com/ufuchs/itplus/base/fcc"
 
 	"github.com/gorilla/websocket"
 )

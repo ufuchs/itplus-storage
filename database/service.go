@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"sync"
 
-	"hidrive.com/ufuchs/itplus/base/fcc"
+	"github.com/ufuchs/itplus/base/fcc"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -162,7 +162,8 @@ func (s *Service) Run(ctx context.Context) error {
 				continue
 			}
 
-			if !s.exists(m.Host) {
+			_, err = s.exists(m.Host)
+			if err != nil {
 				s.addGateway(hubID, m)
 			}
 
@@ -183,7 +184,7 @@ func (s *Service) addGateway(hubID int, m *fcc.MeasurementDTO) {
 		Hostname:    m.Host,
 		Alias:       "",
 	}
-	if err = h.Insert(hubID, gw); err != nil {
+	if _, err = h.Insert(hubID, gw); err != nil {
 		fmt.Printf("adding failed - '%v'\n", err)
 	} else {
 		fmt.Println("added")
@@ -195,14 +196,8 @@ func (s *Service) addGateway(hubID int, m *fcc.MeasurementDTO) {
 //
 //
 //
-func (s *Service) exists(alias string) bool {
+func (s *Service) exists(alias string) (int, error) {
 
 	h := NewHubDAO(s.db)
-
-	b, _ := h.RowExists(alias)
-	// if err != nil {
-	// 	fmt.Println("-->", err)
-	// }
-
-	return b
+	return h.GatewayExists(alias)
 }

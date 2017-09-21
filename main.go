@@ -19,10 +19,10 @@ import (
 	"sync"
 	"syscall"
 
-	"hidrive.com/ufuchs/itplus/base/zvous"
-	//	"hidrive.com/ufuchs/itplus/storage/app"
-	"hidrive.com/ufuchs/itplus/storage/database"
-	"hidrive.com/ufuchs/itplus/storage/socket"
+	"github.com/ufuchs/itplus/base/zvous"
+	//	"github.com/ufuchs/itplus/storage/app"
+	"github.com/ufuchs/itplus/storage/database"
+	"github.com/ufuchs/itplus/storage/socket"
 
 	"github.com/ufuchs/zeroconf"
 	//_ "net/http/pprof"

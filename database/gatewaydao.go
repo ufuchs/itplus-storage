@@ -2,7 +2,6 @@ package database
 
 import (
 	"database/sql"
-	"fmt"
 )
 
 type (
@@ -23,17 +22,12 @@ func NewHubDAO(db *sql.DB) *HubDAO {
 //
 //
 //
-func (d *HubDAO) RowExists(alias string) (bool, error) {
+func (d *HubDAO) GatewayExists(alias string) (int, error) {
+	var gwID int
 
-	var res string
-	err := d.db.QueryRow("SELECT alias FROM gateway WHERE alias = ?", alias).Scan(&res)
-	if err != nil {
-		return false, err
-	}
-	fmt.Println(res)
+	err := d.db.QueryRow("SELECT GatewayID FROM gateway WHERE alias = ?", alias).Scan(&gwID)
 
-	return true, nil
-
+	return gwID, err
 }
 
 //
@@ -69,28 +63,23 @@ func (d *HubDAO) RetrieveAll(hubID int) (GatewayList, error) {
 //
 //
 //
-func (d *HubDAO) Insert(hubID int, gw *Gateway) error {
+func (d *HubDAO) Insert(hubID int, gw *Gateway) (int64, error) {
 
 	var insStmt = "INSERT INTO gateway (HubID, GatewayType, Hostname, Alias) VALUES (?, ?, ?, ?)"
 
 	stmt, err := d.db.Prepare(insStmt)
 	if err != nil {
-		return err
+		return -1, err
 	}
 
 	defer stmt.Close()
 
 	res, err := stmt.Exec(hubID, gw.GatewayType, gw.Hostname, gw.Alias)
 	if err != nil {
-		return err
+		return -1, err
 	}
 
-	_, err = res.LastInsertId()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return res.LastInsertId()
 }
 
 //
