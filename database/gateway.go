@@ -7,11 +7,11 @@ import "database/sql"
 //
 type Gateway struct {
 	GatewayID   int
-	HubID       int
 	GatewayType string
 	Hostname    string
 	Alias       string
 }
+
 
 //
 // NewGateway
@@ -20,7 +20,7 @@ func NewGateway(rs *sql.Rows) (*Gateway, error) {
 	
 	var gw = &Gateway{}
 
-	return gw, rs.Scan(&gw.GatewayID, &gw.HubID, &gw.Hostname, &gw.Alias)
+	return gw, rs.Scan(&gw.GatewayID, &gw.Hostname, &gw.Alias)
 
 }
 	
@@ -36,7 +36,7 @@ func (h *Gateway) Equals(o *Gateway) bool {
 		return true
 	}
 
-	return h.HubID == o.HubID && h.Alias == o.Alias && h.Hostname == o.Hostname
+	return h.Alias == o.Alias && h.Hostname == o.Hostname
 }
 
 //

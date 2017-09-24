@@ -8,31 +8,35 @@ import (
 //
 //
 type GatewayService struct {
-	db    *sql.DB
-	hubID int
+	db *sql.DB
 }
 
 //
 //
 //
-func NewGatewayService(db *sql.DB, hubID int) *GatewayService {
+func NewGatewayService(db *sql.DB) *GatewayService {
 	return &GatewayService{
-		db:    db,
-		hubID: hubID,
+		db: db,
 	}
 }
 
 //
 //
 //
-func (s *GatewayService) AddGateway(hubID int, hostname string) (int64, error) {
+func CreateTableGateway(db *sql.DB) error {
+	return NewGatewayDAO(db).CreateMyTable()
+}
+
+//
+//
+//
+func (s *GatewayService) AddGateway(hostname string) (int64, error) {
 
 	var dao = NewGatewayDAO(s.db)
 
 	dao.CreateMyTable()
 
-	return dao.Insert(hubID, &Gateway{
-		HubID:       hubID,
+	return dao.Insert(&Gateway{
 		GatewayType: "",
 		Hostname:    hostname,
 		Alias:       "",

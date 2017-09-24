@@ -20,16 +20,14 @@ type (
 func NewGatewayDAO(db *sql.DB) *GatewayDAO {
 	dao := &GatewayDAO{
 		existStmt:    "SELECT GatewayID FROM gateway WHERE alias = ?",
-		retrieveStmt: "select GatewayID, HubID, hostname, alias from gateway where HubID = ?",
-		insStmt:      "INSERT INTO gateway (HubID, GatewayType, Hostname, Alias) VALUES (?, ?, ?, ?)",
+		retrieveStmt: "select GatewayID, hostname, alias from gateway",
+		insStmt:      "INSERT INTO gateway (GatewayType, Hostname, Alias) VALUES (?, ?, ?)",
 		createStmt: `CREATE TABLE Gateways (
 			GatewayID   int NOT NULL AUTO_INCREMENT,
-			HubID       int NOT NULL,
 			GatewayType varchar(96),
 			Hostname    varchar(32),
 			Alias       varchar(32),
-			PRIMARY KEY (GatewayID),
-			CONSTRAINT FK_Gateway_Hub FOREIGN KEY (HubID) REFERENCES hub(HubID)
+			PRIMARY KEY (GatewayID)
 		);`,
 	}
 	dao.AbstractDAO.Db = db
@@ -57,11 +55,11 @@ func (d *GatewayDAO) GatewayExists(alias string) (int, error) {
 //
 //
 //
-func (d *GatewayDAO) RetrieveAll(hubID int) (GatewayList, error) {
+func (d *GatewayDAO) RetrieveAll() (GatewayList, error) {
 
 	list := GatewayList{}
 
-	rows, err := d.Db.Query(d.retrieveStmt, hubID)
+	rows, err := d.Db.Query(d.retrieveStmt)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +85,7 @@ func (d *GatewayDAO) RetrieveAll(hubID int) (GatewayList, error) {
 //
 //
 //
-func (d *GatewayDAO) Insert(hubID int, gw *Gateway) (int64, error) {
+func (d *GatewayDAO) Insert(gw *Gateway) (int64, error) {
 
 	stmt, err := d.Db.Prepare(d.insStmt)
 	if err != nil {
@@ -96,7 +94,7 @@ func (d *GatewayDAO) Insert(hubID int, gw *Gateway) (int64, error) {
 
 	defer stmt.Close()
 
-	res, err := stmt.Exec(hubID, gw.GatewayType, gw.Hostname, gw.Alias)
+	res, err := stmt.Exec(gw.GatewayType, gw.Hostname, gw.Alias)
 	if err != nil {
 		return -1, err
 	}

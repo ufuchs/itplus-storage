@@ -27,13 +27,6 @@ type (
 //
 //
 //
-func mergeDSN(user, pwd, dbhost, dbname string) string {
-	return fmt.Sprint("%s:%s@tcp(%s)/%s", user, pwd, dbhost, dbname)
-}
-
-//
-//
-//
 func openDatabase(dsn string) (db *sql.DB, err error) {
 
 	if db, err = sql.Open("mysql", dsn); err != nil {
@@ -48,24 +41,28 @@ func openDatabase(dsn string) (db *sql.DB, err error) {
 }
 
 //
+// Prepare
 //
-//
-func populateSeenGateways(hubID int, db *sql.DB) (seenGateways map[string]bool, err error) {
+func (s *Service) Prepare() error {
 
-	seenGateways = map[string]bool{}
-
-	h := NewGatewayDAO(db)
-
-	gwList, err := h.RetrieveAll(hubID)
+	gwList, err := NewGatewayDAO(s.db).RetrieveAll()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	for _, gw := range gwList {
-		seenGateways[gw.Hostname] = true
+		s.seenGateways[gw.Hostname] = true
 	}
 
-	return seenGateways, nil
+	return nil
+
+}
+
+//
+//
+//
+func (s *Service) CreateTableGateway() error {
+	return NewGatewayDAO(s.db).CreateMyTable()
 }
 
 //
@@ -74,19 +71,17 @@ func populateSeenGateways(hubID int, db *sql.DB) (seenGateways map[string]bool, 
 func NewService(ctx context.Context, dsn, hostname string) (*Service, error) {
 
 	var (
-		err   error
-		hubID = 1
+		err error
 	)
 
 	s := &Service{
-		hostname: hostname,
+		hostname:     hostname,
+		seenGateways: map[string]bool{},
 	}
 
 	if s.db, err = openDatabase(dsn); err != nil {
 		return nil, err
 	}
-
-	s.seenGateways, err = populateSeenGateways(hubID, s.db)
 
 	return s, err
 
@@ -179,12 +174,11 @@ func (s *Service) addGateway(hubID int, m *fcc.MeasurementDTO) {
 	fmt.Printf("==> '%v' doesn't exist - ", m.Host)
 	var h = NewGatewayDAO(s.db)
 	var gw = &Gateway{
-		HubID:       hubID,
 		GatewayType: "",
 		Hostname:    m.Host,
 		Alias:       "",
 	}
-	if _, err = h.Insert(hubID, gw); err != nil {
+	if _, err = h.Insert(gw); err != nil {
 		fmt.Printf("adding failed - '%v'\n", err)
 	} else {
 		fmt.Println("added")

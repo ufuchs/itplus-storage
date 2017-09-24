@@ -13,15 +13,14 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/ufuchs/itplus/base/fcc"
 	"github.com/ufuchs/itplus/base/zvous"
-	//	"github.com/ufuchs/itplus/storage/app"
 	"github.com/ufuchs/itplus/storage/app"
 	"github.com/ufuchs/itplus/storage/database"
 	"github.com/ufuchs/itplus/storage/socket"
@@ -92,7 +91,8 @@ func handleSignals(cancel context.CancelFunc, sigch <-chan os.Signal) {
 func main() {
 
 	var (
-		// err         error
+		err error
+		dbs *database.Service
 		// discoverer  *discovery.TCPDiscoverer
 		// discovered  discovery.ServiceEntryler
 		sigs = make(chan os.Signal, 2)
@@ -122,16 +122,42 @@ func main() {
 
 	}()
 
+	if dbs, err = database.NewService(ctx, app.DSN, "salata"); err != nil {
+		fcc.Fatal(err)
+	}
+
+	defer dbs.Close()
+
+Retry:
+
+	// for err = dbs.Prepare()
+
+	if err = dbs.Prepare(); err != nil {
+
+		me, ok := err.(*mysql.MySQLError)
+		if !ok {
+			fcc.Fatal(err)
+		}
+
+		fmt.Println(me.Number)
+
+		if me.Number != 1146 {
+			fcc.Fatal(err)
+		}
+
+		// table doesn't exist
+		if err = dbs.CreateTableGateway(); err != nil {
+			fcc.Fatal(err)
+		}
+
+		goto Retry
+
+	}
+
 	client := socket.NewClient(ctxWg, app.Hub, 1)
 
-	db, err := database.NewService(ctx, app.DSN, "salata")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	db.In = client.Out
-	go db.Run(ctxWg)
+	dbs.In = client.Out
+	go dbs.Run(ctxWg)
 
 	select {
 	case <-ctx.Done():
