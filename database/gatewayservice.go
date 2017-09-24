@@ -29,6 +29,8 @@ func (s *GatewayService) AddGateway(hubID int, hostname string) (int64, error) {
 
 	var dao = NewGatewayDAO(s.db)
 
+	dao.CreateMyTable()
+
 	return dao.Insert(hubID, &Gateway{
 		HubID:       hubID,
 		GatewayType: "",

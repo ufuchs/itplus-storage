@@ -19,8 +19,10 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/ufuchs/itplus/base/fcc"
 	"github.com/ufuchs/itplus/base/zvous"
 	//	"github.com/ufuchs/itplus/storage/app"
+	"github.com/ufuchs/itplus/storage/app"
 	"github.com/ufuchs/itplus/storage/database"
 	"github.com/ufuchs/itplus/storage/socket"
 
@@ -28,7 +30,25 @@ import (
 	//_ "net/http/pprof"
 )
 
-const PORT = ":8080"
+//
+//
+//
+func prepare() {
+
+	var err error
+
+	if app.BaseDir, err = os.Getwd(); err != nil {
+		fcc.Fatal(err)
+	}
+
+	svc := app.NewConfigService().
+		RetrieveAll()
+
+	if svc.LastErr != nil {
+		fcc.Fatal(svc.LastErr)
+	}
+
+}
 
 //
 // https://stackoverflow.com/questions/30652577/go-doing-a-get-request-and-building-the-querystring
@@ -79,9 +99,12 @@ func main() {
 		wg   sync.WaitGroup
 	)
 
-	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
+	prepare()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	ctxWg := context.WithValue(ctx, 0, &wg)
+
+	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
 	go handleSignals(cancel, sigs)
 
 	hubs := zvous.NewZCBrowserService(zvous.AVAHI_MEASUREMENT, zeroconf.IPv4, 4)
@@ -99,19 +122,15 @@ func main() {
 
 	}()
 
-	client := socket.NewClient("192.168.178.12:8080", 1)
+	client := socket.NewClient(ctxWg, app.Hub, 1)
 
-	go client.Run(ctxWg)
-
-	db, err := database.NewService(ctx, database.DSN, "salata")
+	db, err := database.NewService(ctx, app.DSN, "salata")
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	defer db.Close()
 
 	db.In = client.Out
-
 	go db.Run(ctxWg)
 
 	select {

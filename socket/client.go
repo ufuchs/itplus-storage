@@ -52,13 +52,18 @@ type (
 //
 // NewClient
 //
-func NewClient(addr string, ID int) *Client {
+func NewClient(ctx context.Context, addr string, ID int) *Client {
 	u := url.URL{Scheme: "ws", Host: addr, Path: "/ws"}
-	return &Client{
+	c := &Client{
 		ID:  ID,
 		URL: u.String(),
 		Out: make(chan []byte, 512),
 	}
+
+	go c.Run(ctx)
+
+	return c
+
 }
 
 //

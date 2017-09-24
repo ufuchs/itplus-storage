@@ -1,6 +1,12 @@
 package database
 
-import "database/sql"
+import (
+	"database/sql"
+	"strconv"
+	"strings"
+
+	"github.com/ufuchs/itplus/base/fcc"
+)
 
 //
 //
@@ -37,4 +43,23 @@ func NewLacrosseService(db *sql.DB, gwID int, schema string) (*LacrosseService, 
 func (s *LacrosseService) getExistingTables(alias string) ([]string, error) {
 	dao := NewLacrosseDAO(s.db, s.schema)
 	return dao.GetKnownTables(alias)
+}
+
+//
+//
+//
+func (s *LacrosseService) Insert(m *fcc.MeasurementDTO) error {
+
+	for _, tname := range s.existingTables {
+		a := strings.Index(tname, "_")
+		b, err := strconv.Atoi(tname[a:])
+		if err != nil {
+			break
+		}
+		if b == m.Num {
+			break
+		}
+	}
+
+	return nil
 }

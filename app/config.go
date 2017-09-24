@@ -27,9 +27,10 @@ type (
 )
 
 var (
-	BaseDir    string
-	SocketPort int
-	DSN        string
+	BaseDir  string
+	Hub      string
+	DSN      string
+	Gateways []string
 )
 
 //
@@ -45,8 +46,9 @@ func NewConfigService() *ConfigService {
 func (d *ConfigService) RetrieveAll() *ConfigService {
 
 	type Config struct {
-		SocketPort int    `yaml:"socketport"`
-		DSN        string `yaml:"dsn"`
+		Hub      string   `yaml:"hub"`
+		DSN      string   `yaml:"dsn"`
+		Gateways []string `yaml:"gateways"`
 	}
 
 	if d.LastErr != nil {
@@ -58,8 +60,9 @@ func (d *ConfigService) RetrieveAll() *ConfigService {
 	config := &Config{}
 	d.LastErr = readYML(config, filename)
 
-	SocketPort = config.SocketPort
+	Hub = config.Hub
 	DSN = config.DSN
+	Gateways = config.Gateways
 
 	return d
 }

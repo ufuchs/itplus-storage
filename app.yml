@@ -1,3 +1,6 @@
 ---
-socketport: 8080
+hub: "192.168.178.12:8080"
 dsn: "itplus:abc12345@tcp(192.168.178.12:3306)/itp_home"
+gateways: 
+  - rigaer28-v3
+  - rigaer28-thing

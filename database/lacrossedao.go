@@ -9,9 +9,8 @@ import (
 // LacrosseDAO
 //
 type LacrosseDAO struct {
+	AbstractDAO
 	insStmt string
-	db      *sql.DB
-	schema  string
 }
 
 //
@@ -45,11 +44,15 @@ func NewLacrosseDAO(db *sql.DB, schema string) *LacrosseDAO {
 		?
 	)
 	`
-	return &LacrosseDAO{
+	dao := &LacrosseDAO{
 		insStmt: insStmt,
-		db:      db,
-		schema:  schema,
 	}
+
+	dao.AbstractDAO.Db = db
+	dao.AbstractDAO.Schema = schema
+
+	return dao
+
 }
 
 //
@@ -76,7 +79,7 @@ func (d *LacrosseDAO) CreateTable(fqn string) error {
 	`
 	sql := fmt.Sprintf(s, fqn, fqn, fqn, fqn)
 
-	stmt, err := d.db.Prepare(sql)
+	stmt, err := d.Db.Prepare(sql)
 	if err != nil {
 		return err
 	}
@@ -98,11 +101,7 @@ func (d *LacrosseDAO) ExistsTable(fqn string) bool {
 
 	var s = "SELECT table_name FROM information_schema.tables WHERE table_schema = ? AND table_name = ?"
 
-	if err := d.db.QueryRow(s, d.schema, fqn).Scan(&tname); err != nil {
-		return false
-	}
-
-	return true
+	return d.Db.QueryRow(s, d.Schema, fqn).Scan(&tname) == nil
 
 }
 
@@ -114,7 +113,7 @@ func (d *LacrosseDAO) GetKnownTables(tableName string) (res []string, err error)
 	var s = "SELECT table_name FROM information_schema.tables WHERE table_schema = ? AND table_name LIKE ?"
 	var rows *sql.Rows
 
-	if rows, err = d.db.Query(s, d.schema, tableName+"%"); err != nil {
+	if rows, err = d.Db.Query(s, d.Schema, tableName+"%"); err != nil {
 		return nil, err
 	}
 
@@ -139,32 +138,30 @@ func (d *LacrosseDAO) GetKnownTables(tableName string) (res []string, err error)
 }
 
 //
-// {"host":"rigaer28-v3","num":5,"alias":"Wohnzimmer","phenomenontime":1505763276,"lon":5.1,"lat":5.2,"alt":5.3,"temp":18.7,"pressure":56,"humidity":-999,"lowbattery":false}
 //
-func (d *LacrosseDAO) Insert(gwID int, m *MeasurementEx) error {
+//
+func (d *LacrosseDAO) getFQNTablename(basename string, num int) string {
+	return fmt.Sprintf("%s_%0.2d", "Lacrosse", 6)
+}
 
-	stmt, err := d.db.Prepare(d.insStmt)
+//
+//
+//
+func (d *LacrosseDAO) Insert(gwID int, basename string, m *MeasurementEx) error {
+
+	fqn := d.getFQNTablename(basename, m.Num)
+
+	insStmt := fmt.Sprintf(d.insStmt, fqn)
+
+	stmt, err := d.Db.Prepare(insStmt)
 	if err != nil {
 		return err
 	}
 
 	defer stmt.Close()
 
-	res, err := stmt.Exec(gwID, m.Num, m.Alias, m.PhenomenonTime, m.Lon, m.Lat,
+	_, err = stmt.Exec(gwID, m.Num, m.Alias, m.PhenomenonTime, m.Lon, m.Lat,
 		m.Alt, m.Temp, m.Pressure, m.Humidity, m.LowBattery)
-	if err != nil {
-		return err
-	}
 
-	_, err = res.LastInsertId()
-	if err != nil {
-		return err
-	}
-
-	_, err = res.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }

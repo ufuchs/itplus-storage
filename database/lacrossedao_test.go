@@ -4,7 +4,36 @@ import (
 	"database/sql"
 	"fmt"
 	"testing"
+
+	"github.com/ufuchs/itplus/base/fcc"
 )
+
+func getMeasurement() *MeasurementEx {
+
+	n := fcc.MeasurementDTO{
+
+		Host:           "rigaer28-v3",
+		Num:            5,
+		Alias:          "Wohnzimmer",
+		PhenomenonTime: 1505763276,
+		Lon:            5.1,
+		Lat:            5.2,
+		Alt:            5.3,
+		Temp:           18.7,
+		Pressure:       56,
+		Humidity:       -999,
+		LowBattery:     false,
+	}
+
+	m := MeasurementEx{
+		GatewayID: 1,
+	}
+
+	m.MeasurementDTO = n
+
+	return &m
+
+}
 
 func TestLacrosse(t *testing.T) {
 
@@ -41,5 +70,15 @@ func TestLacrosse(t *testing.T) {
 	exists := dao.ExistsTable("Lacrosse_06")
 
 	fmt.Println(exists)
+
+	fqn := dao.getFQNTablename("Lacrosse", 5)
+
+	fmt.Println(fqn)
+
+	err = dao.Insert(16, "Lacrosse", getMeasurement())
+
+	if err != nil {
+		t.Error(err)
+	}
 
 }
