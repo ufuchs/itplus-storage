@@ -145,9 +145,13 @@ Retry:
 			fcc.Fatal(err)
 		}
 
-		// table doesn't exist
 		if err = dbs.CreateTableGateway(); err != nil {
 			fcc.Fatal(err)
+		}
+
+		gwService := database.NewGatewayService(dbs.Db)
+		for _, gwName := range app.Gateways {
+			gwService.AddGateway(gwName)
 		}
 
 		goto Retry

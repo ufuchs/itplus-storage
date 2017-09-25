@@ -24,7 +24,12 @@ func NewAbstractDAO(db *sql.DB, schema string) *AbstractDAO {
 //
 func (a *AbstractDAO) CreateTable(sql string) error {
 
-	stmt, err := a.Db.Prepare(sql)
+	tx, err := a.Db.Begin()
+	if err != nil {
+		return err
+	}
+
+	stmt, err := tx.Prepare(sql)
 	if err != nil {
 		return err
 	}
@@ -32,7 +37,11 @@ func (a *AbstractDAO) CreateTable(sql string) error {
 	defer stmt.Close()
 
 	_, err = stmt.Exec()
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
 
-	return err
+	return tx.Commit()
 
 }

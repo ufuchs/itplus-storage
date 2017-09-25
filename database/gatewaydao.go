@@ -19,9 +19,9 @@ type (
 //
 func NewGatewayDAO(db *sql.DB) *GatewayDAO {
 	dao := &GatewayDAO{
-		existStmt:    "SELECT GatewayID FROM gateway WHERE alias = ?",
-		retrieveStmt: "select GatewayID, hostname, alias from gateway",
-		insStmt:      "INSERT INTO gateway (GatewayType, Hostname, Alias) VALUES (?, ?, ?)",
+		existStmt:    "SELECT GatewayID FROM Gateways WHERE alias = ?",
+		retrieveStmt: "select GatewayID, hostname, alias from Gateways",
+		insStmt:      "INSERT INTO Gateways (GatewayType, Hostname, Alias) VALUES (?, ?, ?)",
 		createStmt: `CREATE TABLE Gateways (
 			GatewayID   int NOT NULL AUTO_INCREMENT,
 			GatewayType varchar(96),

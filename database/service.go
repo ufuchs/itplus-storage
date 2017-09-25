@@ -15,7 +15,7 @@ import (
 type (
 	Service struct {
 		ctx          context.Context
-		db           *sql.DB
+		Db           *sql.DB
 		hostname     string
 		In           chan []byte
 		seenGateways map[string]bool
@@ -45,7 +45,7 @@ func openDatabase(dsn string) (db *sql.DB, err error) {
 //
 func (s *Service) Prepare() error {
 
-	gwList, err := NewGatewayDAO(s.db).RetrieveAll()
+	gwList, err := NewGatewayDAO(s.Db).RetrieveAll()
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func (s *Service) Prepare() error {
 //
 //
 func (s *Service) CreateTableGateway() error {
-	return NewGatewayDAO(s.db).CreateMyTable()
+	return NewGatewayDAO(s.Db).CreateMyTable()
 }
 
 //
@@ -79,7 +79,7 @@ func NewService(ctx context.Context, dsn, hostname string) (*Service, error) {
 		seenGateways: map[string]bool{},
 	}
 
-	if s.db, err = openDatabase(dsn); err != nil {
+	if s.Db, err = openDatabase(dsn); err != nil {
 		return nil, err
 	}
 
@@ -93,7 +93,7 @@ func NewService(ctx context.Context, dsn, hostname string) (*Service, error) {
 // Close
 //
 func (s *Service) Close() {
-	err := s.db.Close()
+	err := s.Db.Close()
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -172,7 +172,7 @@ func (s *Service) addGateway(hubID int, m *fcc.MeasurementDTO) {
 	var err error
 
 	fmt.Printf("==> '%v' doesn't exist - ", m.Host)
-	var h = NewGatewayDAO(s.db)
+	var h = NewGatewayDAO(s.Db)
 	var gw = &Gateway{
 		GatewayType: "",
 		Hostname:    m.Host,
@@ -192,6 +192,6 @@ func (s *Service) addGateway(hubID int, m *fcc.MeasurementDTO) {
 //
 func (s *Service) exists(alias string) (int, error) {
 
-	h := NewGatewayDAO(s.db)
+	h := NewGatewayDAO(s.Db)
 	return h.GatewayExists(alias)
 }
