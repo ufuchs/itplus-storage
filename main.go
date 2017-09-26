@@ -130,8 +130,6 @@ func main() {
 
 Retry:
 
-	// for err = dbs.Prepare()
-
 	if err = dbs.Prepare(); err != nil {
 
 		me, ok := err.(*mysql.MySQLError)
@@ -139,7 +137,7 @@ Retry:
 			fcc.Fatal(err)
 		}
 
-		fmt.Println(me.Number)
+		//fmt.Println(me.Number)
 
 		if me.Number != 1146 {
 			fcc.Fatal(err)
@@ -149,9 +147,8 @@ Retry:
 			fcc.Fatal(err)
 		}
 
-		gwService := database.NewGatewayService(dbs.Db)
-		for _, gwName := range app.Gateways {
-			gwService.AddGateway(gwName)
+		if err = dbs.PopulateTableGateway(app.Gateways); err != nil {
+			fcc.Fatal(err)
 		}
 
 		goto Retry

@@ -44,8 +44,8 @@ func (d *GatewayDAO) CreateMyTable() error {
 //
 //
 //
-func (d *GatewayDAO) GatewayExists(alias string) (int, error) {
-	var gwID int
+func (d *GatewayDAO) GatewayExists(alias string) (int64, error) {
+	var gwID int64
 
 	err := d.Db.QueryRow(d.existStmt, alias).Scan(&gwID)
 
@@ -55,9 +55,9 @@ func (d *GatewayDAO) GatewayExists(alias string) (int, error) {
 //
 //
 //
-func (d *GatewayDAO) RetrieveAll() (GatewayList, error) {
+func (d *GatewayDAO) RetrieveAll() (map[string]*Gateway, error) {
 
-	list := GatewayList{}
+	list := map[string]*Gateway{}
 
 	rows, err := d.Db.Query(d.retrieveStmt)
 	if err != nil {
@@ -69,12 +69,11 @@ func (d *GatewayDAO) RetrieveAll() (GatewayList, error) {
 	for rows.Next() {
 
 		gw, err := NewGateway(rows)
-
 		if err != nil {
 			return nil, err
 		}
 
-		list = append(list, gw)
+		list[gw.Hostname] = gw
 
 	}
 

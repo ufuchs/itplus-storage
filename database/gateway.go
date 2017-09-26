@@ -6,24 +6,23 @@ import "database/sql"
 //
 //
 type Gateway struct {
-	GatewayID   int
+	GatewayID   int64
 	GatewayType string
 	Hostname    string
 	Alias       string
 }
 
-
 //
 // NewGateway
 //
 func NewGateway(rs *sql.Rows) (*Gateway, error) {
-	
+
 	var gw = &Gateway{}
 
 	return gw, rs.Scan(&gw.GatewayID, &gw.Hostname, &gw.Alias)
 
 }
-	
+
 //
 // Equals
 //
@@ -48,20 +47,19 @@ type GatewayList []*Gateway
 // Contains
 //
 func (l GatewayList) Contains(o *Gateway) bool {
-	
-		if len(l) == 0 {
-			return false
-		}
-	
-		for _, g := range l {
-	
-			if g.Equals(o) {
-				return true
-			}
-	
-		}
-	
+
+	if len(l) == 0 {
 		return false
-	
 	}
-	
+
+	for _, g := range l {
+
+		if g.Equals(o) {
+			return true
+		}
+
+	}
+
+	return false
+
+}

@@ -8,7 +8,8 @@ import (
 //
 //
 type GatewayService struct {
-	db *sql.DB
+	db   *sql.DB
+	list map[string]*Gateway
 }
 
 //
@@ -16,7 +17,8 @@ type GatewayService struct {
 //
 func NewGatewayService(db *sql.DB) *GatewayService {
 	return &GatewayService{
-		db: db,
+		db:   db,
+		list: map[string]*Gateway{},
 	}
 }
 
@@ -30,22 +32,19 @@ func CreateTableGateway(db *sql.DB) error {
 //
 //
 //
-func (s *GatewayService) AddGateway(hostname string) (int64, error) {
-
-	var dao = NewGatewayDAO(s.db)
-
-	return dao.Insert(&Gateway{
-		GatewayType: "",
-		Hostname:    hostname,
-		Alias:       "",
-	})
-
+func (s *GatewayService) Insert(g *Gateway) (int64, error) {
+	return NewGatewayDAO(s.db).Insert(g)
 }
 
 //
 //
 //
-func (s *GatewayService) GatewayExists(host string) (int, error) {
-	dao := NewGatewayDAO(s.db)
-	return dao.GatewayExists(host)
+func (s *GatewayService) GatewayExists(host string) (int64, error) {
+	return NewGatewayDAO(s.db).GatewayExists(host)
+}
+
+func (s *GatewayService) RetrieveAll() error {
+	var err error
+	s.list, err = NewGatewayDAO(s.db).RetrieveAll()
+	return err
 }

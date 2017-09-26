@@ -8,17 +8,19 @@ import (
 	"sync"
 
 	"github.com/ufuchs/itplus/base/fcc"
+	"github.com/ufuchs/itplus/storage/app"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
 type (
 	Service struct {
-		ctx          context.Context
-		Db           *sql.DB
-		hostname     string
-		In           chan []byte
-		seenGateways map[string]bool
+		ctx            context.Context
+		Db             *sql.DB
+		GatewayService *GatewayService
+		hostname       string
+		In             chan []byte
+		seenGateways   map[string]bool
 	}
 )
 
@@ -41,31 +43,6 @@ func openDatabase(dsn string) (db *sql.DB, err error) {
 }
 
 //
-// Prepare
-//
-func (s *Service) Prepare() error {
-
-	gwList, err := NewGatewayDAO(s.Db).RetrieveAll()
-	if err != nil {
-		return err
-	}
-
-	for _, gw := range gwList {
-		s.seenGateways[gw.Hostname] = true
-	}
-
-	return nil
-
-}
-
-//
-//
-//
-func (s *Service) CreateTableGateway() error {
-	return NewGatewayDAO(s.Db).CreateMyTable()
-}
-
-//
 // NewService
 //
 func NewService(ctx context.Context, dsn, hostname string) (*Service, error) {
@@ -83,8 +60,62 @@ func NewService(ctx context.Context, dsn, hostname string) (*Service, error) {
 		return nil, err
 	}
 
+	s.GatewayService = NewGatewayService(s.Db)
+
 	return s, err
 
+}
+
+//
+// Prepare
+//
+func (s *Service) Prepare() error {
+
+	err := s.GatewayService.RetrieveAll()
+	if err != nil {
+		return err
+	}
+
+	/*
+		for _, gw := range gwList {
+			s.seenGateways[gw.Hostname] = true
+		}
+	*/
+
+	return nil
+
+}
+
+//
+//
+//
+func (s *Service) CreateTableGateway() error {
+	return NewGatewayDAO(s.Db).CreateMyTable()
+}
+
+//
+//
+//
+func (s *Service) PopulateTableGateway(gateways []string) error {
+	var err error
+
+	for _, hostname := range app.Gateways {
+
+		g := &Gateway{
+			GatewayType: "",
+			Hostname:    hostname,
+			Alias:       "",
+		}
+
+		fmt.Println(hostname)
+
+		if g.GatewayID, err = s.GatewayService.Insert(g); err != nil {
+			return err
+		}
+
+	}
+
+	return nil
 }
 
 // {"host":"rigaer28-v3","num":5,"alias":"Wohnzimmer","phenomenontime":1505763276,"lon":5.1,"lat":5.2,"alt":5.3,"temp":18.7,"pressure":56,"humidity":-999,"lowbattery":false}
@@ -190,8 +221,6 @@ func (s *Service) addGateway(hubID int, m *fcc.MeasurementDTO) {
 //
 //
 //
-func (s *Service) exists(alias string) (int, error) {
-
-	h := NewGatewayDAO(s.Db)
-	return h.GatewayExists(alias)
+func (s *Service) exists(alias string) (int64, error) {
+	return NewGatewayDAO(s.Db).GatewayExists(alias)
 }
